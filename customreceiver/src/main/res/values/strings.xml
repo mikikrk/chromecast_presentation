@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Custom receiver</string>
+    <string name="cast_app_id" translatable="false">B9CC1152</string>
+    <string name="cast_namespace" translatable="false">urn:x-cast:com.colortv.hello.channel</string>
+    <string name="action_settings">Settings</string>
+    <string name="message_to_cast">Message to Cast&#8230;</string>
+    <string name="media_route_menu_title">Play on&#8230;</string>
+    <string name="instructions">Talk to me</string>
+    <string name="submit">Submit</string>
+    <string name="hello">Hello Polish JUG!</string>
+</resources>

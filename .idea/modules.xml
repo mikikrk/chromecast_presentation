@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/ChromecastPresentation.iml" filepath="$PROJECT_DIR$/ChromecastPresentation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/customreceiver/customreceiver.iml" filepath="$PROJECT_DIR$/customreceiver/customreceiver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/styledmediareceiver/styledmediareceiver.iml" filepath="$PROJECT_DIR$/styledmediareceiver/styledmediareceiver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/styledmediareceiver_big/styledmediareceiver_big.iml" filepath="$PROJECT_DIR$/styledmediareceiver_big/styledmediareceiver_big.iml" />
+    </modules>
+  </component>
+</project>

@@ -1,3 +1,22 @@
+package com.colortv.cast.testapp.connection;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Log;
+
+import com.colortv.android.googlecast.ColorTvCastSDK;
+import com.colortv.cast.testapp.CastChannel;
+import com.google.android.gms.cast.Cast;
+import com.google.android.gms.cast.CastDevice;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+
+import java.io.IOException;
+
 public class CastApiManager {
 
     private static CastApiManager instance;
@@ -34,11 +53,8 @@ public class CastApiManager {
                     .build();
 
             apiClient.connect();
-            ColorTvCastSDK.setApiClient(apiClient);
         }
     }
-
-    
 
     public void setUpChannel() {
         try {
@@ -56,14 +72,70 @@ public class CastApiManager {
         }
     }
 
-    public GoogleApiClient getApiClient() {
-        return apiClient;
-    }
-
     public void sendMessage(String message) {
         if (isConnected()) {
             Cast.CastApi.sendMessage(apiClient, castChannel.getNamespace(), message);
         }
+    }
+
+    private Cast.Listener prepareCastClientListener() {
+        return new Cast.Listener() {
+            @Override
+            public void onApplicationDisconnected(int i) {
+                super.onApplicationDisconnected(i);
+                Log.w(CastApiManager.class.getName(), "Disconnected");
+            }
+        };
+    }
+
+    private GoogleApiClient.ConnectionCallbacks prepareConnectionCallbacks() {
+        return new GoogleApiClient.ConnectionCallbacks() {
+
+            @Override
+            public void onConnected(@Nullable Bundle bundle) {
+                if (apiClient == null) {
+                    return;
+                }
+                boolean isReceiverAppRunning = bundle != null && !bundle.getBoolean(Cast.EXTRA_APP_NO_LONGER_RUNNING);
+                if (!isReceiverAppRunning) {
+                    Cast.CastApi.launchApplication(apiClient, appId)
+                            .setResultCallback(prepareLaunchApplicationCallback());
+
+                } else {
+                    Cast.CastApi.joinApplication(apiClient);
+                }
+            }
+
+            private ResultCallback<? super Cast.ApplicationConnectionResult> prepareLaunchApplicationCallback() {
+                return new ResultCallback<Cast.ApplicationConnectionResult>() {
+                    @Override
+                    public void onResult(Cast.ApplicationConnectionResult result) {
+                        Status status = result.getStatus();
+                        if (status.isSuccess()) {
+                            setUpChannel();
+                        }
+                    }
+                };
+            }
+
+            @Override
+            public void onConnectionSuspended(int i) {
+                apiClient.reconnect();
+            }
+        };
+    }
+
+    private GoogleApiClient.OnConnectionFailedListener prepareConnectionFailedListener() {
+        return new GoogleApiClient.OnConnectionFailedListener() {
+            @Override
+            public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+                Log.w("ColorTvTestapp", "connection failed");
+            }
+        };
+    }
+
+    public GoogleApiClient getApiClient() {
+        return apiClient;
     }
 
 

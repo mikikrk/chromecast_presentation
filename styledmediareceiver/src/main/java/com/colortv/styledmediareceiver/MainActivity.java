@@ -3,7 +3,6 @@ package com.colortv.styledmediareceiver;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.media.MediaBrowserCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -13,7 +12,6 @@ import android.widget.VideoView;
 import com.colortv.styledmediareceiver.model.SampleVideoInfoFactory;
 import com.colortv.styledmediareceiver.widgets.ExpandedControlsActivity;
 import com.google.android.gms.cast.MediaInfo;
-import com.google.android.gms.cast.MediaQueueItem;
 import com.google.android.gms.cast.MediaStatus;
 import com.google.android.gms.cast.framework.CastButtonFactory;
 import com.google.android.gms.cast.framework.CastContext;
@@ -90,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
                 if (mediaInfo != null) {
                     String receiversUrl = mediaInfo.getContentId();
                     if (!receiversUrl.equals(SampleVideoInfoFactory.VIDEO_URL)) {
-                        remoteMediaClient.load(SampleVideoInfoFactory.getVideoMediaInfo(), videoView.isPlaying(), videoView.getCurrentPosition());
+                        loadVideo(remoteMediaClient, videoView.isPlaying(), videoView.getCurrentPosition());
                     }
                 }
             }
@@ -105,6 +103,84 @@ public class MainActivity extends AppCompatActivity {
             invalidateOptionsMenu();
         }
     };
+
+    private void loadVideo(RemoteMediaClient remoteMediaClient, boolean autoPlay, int position) {
+        remoteMediaClient.load(SampleVideoInfoFactory.getVideoMediaInfo(), autoPlay, position);
+        remoteMediaClient.addProgressListener(new RemoteMediaClient.ProgressListener() {
+            @Override
+            public void onProgressUpdated(long progressMs, long durationMs) {
+                progress = (int) progressMs;
+            }
+        }, PROGRESS_UPDATE_PERIOD);
+    }
+
+    private void pauseVideo() {
+        isPlaying = false;
+        if (castSession == null) {
+            videoView.pause();
+            progress = videoView.getCurrentPosition();
+        } else {
+            RemoteMediaClient remoteMediaClient = castSession.getRemoteMediaClient();
+            if (remoteMediaClient != null) {
+                remoteMediaClient.pause();
+                MediaStatus mediaStatus = remoteMediaClient.getMediaStatus();
+                if (mediaStatus != null) {
+                    videoView.seekTo((int)mediaStatus.getStreamPosition());
+                }
+            }
+        }
+    }private void playVideoRemotely(boolean autoPlay, int position) {
+        RemoteMediaClient remoteMediaClient = castSession.getRemoteMediaClient();
+        if (remoteMediaClient != null) {
+            //TODO Expanded Controller
+//            playInExpandedController(remoteMediaClient, autoPlay, position);
+            if (remoteMediaClient.isPaused()) {
+                remoteMediaClient.play();
+            } else {
+                loadVideo(remoteMediaClient, autoPlay, position);
+            }
+        }
+    }
+
+    private void playInExpandedController(final RemoteMediaClient remoteMediaClient, boolean autoPlay, int position) {
+        remoteMediaClient.addListener(new RemoteMediaClient.Listener() {
+            @Override
+            public void onStatusUpdated() {
+                Intent intent = new Intent(MainActivity.this, ExpandedControlsActivity.class);
+                startActivity(intent);
+                remoteMediaClient.removeListener(this);
+            }
+
+            @Override
+            public void onMetadataUpdated() {
+            }
+
+            @Override
+            public void onQueueStatusUpdated() {
+            }
+
+            @Override
+            public void onPreloadStatusUpdated() {
+            }
+
+            @Override
+            public void onSendingRemoteMediaRequest() {
+            }
+        });
+        remoteMediaClient.load(SampleVideoInfoFactory.getVideoMediaInfo(), autoPlay, position);
+    }
+
+    private void playVideo(boolean autoPlay, int position) {
+        isPlaying = true;
+        if (castSession != null) {
+            playVideoRemotely(autoPlay, position);
+        } else {
+            if (progress > videoView.getCurrentPosition()) {
+                videoView.seekTo(progress);
+            }
+            videoView.start();
+        }
+    }
 
     private boolean isPlaying = false;
     private int progress;
@@ -137,82 +213,6 @@ public class MainActivity extends AppCompatActivity {
 
         castContext = CastContext.getSharedInstance(this);
         castContext.registerLifecycleCallbacksBeforeIceCreamSandwich(this, savedInstanceState);
-    }
-
-    private void playVideo(boolean autoPlay, int position) {
-        isPlaying = true;
-        if (castSession != null) {
-            playVideoRemotely(autoPlay, position);
-        } else {
-            if (progress > videoView.getCurrentPosition()) {
-                videoView.seekTo(progress);
-            }
-            videoView.start();
-        }
-    }
-
-    private void playVideoRemotely(boolean autoPlay, int position) {
-        RemoteMediaClient remoteMediaClient = castSession.getRemoteMediaClient();
-        if (remoteMediaClient != null) {
-            //TODO Expanded Controller
-            playInExpandedController(remoteMediaClient, autoPlay, position);
-//            if (remoteMediaClient.isPaused()) {
-//                remoteMediaClient.play();
-//            } else {
-//                remoteMediaClient.load(SampleVideoInfoFactory.getVideoMediaInfo(), autoPlay, position);
-//                remoteMediaClient.addProgressListener(new RemoteMediaClient.ProgressListener() {
-//                    @Override
-//                    public void onProgressUpdated(long progressMs, long durationMs) {
-//                        progress = (int) progressMs;
-//                    }
-//                }, PROGRESS_UPDATE_PERIOD);
-//            }
-        }
-    }
-
-    private void pauseVideo() {
-        isPlaying = false;
-        if (castSession == null) {
-            videoView.pause();
-            progress = videoView.getCurrentPosition();
-        } else {
-            RemoteMediaClient remoteMediaClient = castSession.getRemoteMediaClient();
-            if (remoteMediaClient != null) {
-                remoteMediaClient.pause();
-                MediaStatus mediaStatus = remoteMediaClient.getMediaStatus();
-                if (mediaStatus != null) {
-                    videoView.seekTo((int)mediaStatus.getStreamPosition());
-                }
-            }
-        }
-    }
-
-    private void playInExpandedController(final RemoteMediaClient remoteMediaClient, boolean autoPlay, int position) {
-        remoteMediaClient.addListener(new RemoteMediaClient.Listener() {
-            @Override
-            public void onStatusUpdated() {
-                Intent intent = new Intent(MainActivity.this, ExpandedControlsActivity.class);
-                startActivity(intent);
-                remoteMediaClient.removeListener(this);
-            }
-
-            @Override
-            public void onMetadataUpdated() {
-            }
-
-            @Override
-            public void onQueueStatusUpdated() {
-            }
-
-            @Override
-            public void onPreloadStatusUpdated() {
-            }
-
-            @Override
-            public void onSendingRemoteMediaRequest() {
-            }
-        });
-        remoteMediaClient.load(SampleVideoInfoFactory.getVideoMediaInfo(), autoPlay, position);
     }
 
     @Override

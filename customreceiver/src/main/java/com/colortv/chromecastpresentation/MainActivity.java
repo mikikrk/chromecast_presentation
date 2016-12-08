@@ -29,6 +29,20 @@ public class MainActivity extends AppCompatActivity {
     private CastSession castSession;
     private HelloWorldChannel helloWorldChannel;
 
+    private void setUpMediaRouteButton() {
+        MediaRouteButton btnMediaRoute = (MediaRouteButton) findViewById(R.id.btnMediaRoute);
+        CastButtonFactory.setUpMediaRouteButton(this, btnMediaRoute);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.main, menu);
+
+        CastButtonFactory.setUpMediaRouteButton(this, menu, R.id.media_route_menu_item);
+        return true;
+    }
+
     private SessionManagerListener<CastSession> sessionManagerListener
             = new SessionManagerListener<CastSession>() {
         @Override
@@ -147,20 +161,6 @@ public class MainActivity extends AppCompatActivity {
 
         castContext = CastContext.getSharedInstance(this);
         castContext.registerLifecycleCallbacksBeforeIceCreamSandwich(this, savedInstanceState);
-    }
-
-    private void setUpMediaRouteButton() {
-        MediaRouteButton btnMediaRoute = (MediaRouteButton) findViewById(R.id.btnMediaRoute);
-        CastButtonFactory.setUpMediaRouteButton(this, btnMediaRoute);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        super.onCreateOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.main, menu);
-
-        CastButtonFactory.setUpMediaRouteButton(this, menu, R.id.media_route_menu_item);
-        return true;
     }
 
     @Override

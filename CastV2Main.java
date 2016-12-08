@@ -13,10 +13,7 @@ import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
 public class MainActivity extends MainActivityCommon {
-    private static final String APP_ID = "3C1F0065"; //production;
-//    private static final String APP_ID = "217F9353"; //staging;
-//    private static final String APP_ID = "E77E6C8E"; // Mikolaj;
-//    private static final String APP_ID = "6F846038"; //Daniel
+    private static final String APP_ID = "3C1F0065"; 
 
     private MediaRouteSelector mediaRouteSelector;
     private CastDevice selectedDevice;
@@ -50,25 +47,12 @@ public class MainActivity extends MainActivityCommon {
                 .addControlCategory(CastMediaControlIntent.categoryForCast(APP_ID))
                 .build();
 
-        mediaRouterCallback = prepareMediaRouterCallback();
-        mediaRouter.addCallback(mediaRouteSelector, mediaRouterCallback,
+        mediaRouter.addCallback(mediaRouteSelector, prepareMediaRouterCallback(),
                 MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
         mediaRouter.updateSelectedRoute(mediaRouteSelector);
         if (!mediaRouteItemInitialized && menu != null) {
             initGoogleCastButton();
         }
-        ColorTvCastSDK.setDebugMode(true);
-        ColorTvCastSDK.init(getApplicationContext(), mediaRouteSelector);
-    }
-
-    @Override
-    protected void sendMessage(String message) {
-        castApiManager.sendMessage(message);
-    }
-
-    @Override
-    protected boolean isConnected() {
-        return castApiManager.isConnected();
     }
 
     @Override
@@ -76,18 +60,12 @@ public class MainActivity extends MainActivityCommon {
         super.onCreateOptionsMenu(menu);
         this.menu = menu;
         getMenuInflater().inflate(R.menu.cast_menu, menu);
-        if (mediaRouteSelector != null) {
-            initGoogleCastButton();
-        } else {
-            mediaRouteItemInitialized = false;
-        }
-        return true;
-    }
-
-    public void initGoogleCastButton() {
+        initGoogleCastButton();
         MenuItem mediaRouteMenuItem = menu.findItem(R.id.item_google_cast);
         MediaRouteActionProvider mediaRouteActionProvider = (MediaRouteActionProvider) MenuItemCompat.getActionProvider(mediaRouteMenuItem);
         mediaRouteActionProvider.setRouteSelector(mediaRouteSelector);
+
+        return true;
     }
 
     private MediaRouter.Callback prepareMediaRouterCallback() {
